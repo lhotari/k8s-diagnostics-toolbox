@@ -115,6 +115,22 @@ function diag_jfr() {
   fi
 }
 
+function diag_jfr_profile() {
+  if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
+    echo "Run JFR profiling in interactive mode"
+    if [ "$1" == "--help" ]; then
+      echo "usage: $0 diag_jfr_profile [pod_name]"
+    fi
+    return 0
+  fi
+  local PODNAME="$1"
+  [ -n "$PODNAME" ] || return 1
+  echo "Starting JFR profiling..."
+  diag_jfr "$PODNAME" start
+  _diag_wait_for_any_key "Press any key to stop profiling..."
+  diag_jfr "$PODNAME" stop
+}
+
 function diag_async_profiler() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
     echo "Run async-profiler for the pod's initial pid"
