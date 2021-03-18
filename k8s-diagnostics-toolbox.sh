@@ -176,7 +176,7 @@ function diag_async_profiler_profile() {
   case "$COMMAND" in
     jfr)
       echo "Profiling CPU, allocations and locks in JFR format..."
-      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -f /tmp/async_profiler.jfr 1
+      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f /tmp/async_profiler.jfr 1
       _diag_wait_for_any_key "Press any key to stop profiling..."
       diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1
       ;;
