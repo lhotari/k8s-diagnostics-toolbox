@@ -136,24 +136,55 @@ function diag_async_profiler() {
   echo 0 > /proc/sys/kernel/kptr_restrict
   (diag_crictl exec -is $CONTAINER /tmp/async-profiler/profiler.sh "$@" && echo "Done.") || echo "Failed."
   echo "Rootpath $ROOT_PATH"
-  local argc=$#
-  local argv=("$@")
-  for (( i=0; i<argc; i++ )); do
-      if [[ "${argv[i]}" == "-f" ]]; then
-        local nextarg=$((i+1))
-        local fileparam="${argv[nextarg]}"
-        if [ -f "$ROOT_PATH/$fileparam" ]; then
-          local filename=$(basename -- "$fileparam")
-          local extension="${filename##*.}"
-          local filename="${filename%.*}"
-          local target_filename="${filename}_$(date +%F-%H%M%S).${extension}"
-          mv "$ROOT_PATH/$fileparam" "$target_filename"
-          _diag_chown_sudo_user "$target_filename"
-          echo "$target_filename"
+  if [[ "$1" != "start" ]]; then
+    local argc=$#
+    local argv=("$@")
+    for (( i=0; i<argc; i++ )); do
+        if [[ "${argv[i]}" == "-f" ]]; then
+          local nextarg=$((i+1))
+          local fileparam="${argv[nextarg]}"
+          if [ -f "$ROOT_PATH/$fileparam" ]; then
+            local filename=$(basename -- "$fileparam")
+            local extension="${filename##*.}"
+            local filename="${filename%.*}"
+            local target_filename="${filename}_$(date +%F-%H%M%S).${extension}"
+            mv "$ROOT_PATH/$fileparam" "$target_filename"
+            _diag_chown_sudo_user "$target_filename"
+            echo "$target_filename"
+          fi
         fi
-      fi
-  done
+    done
+  fi
 }
+
+
+function diag_async_profiler_profile() {
+  if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
+    echo "Run async-profiler profiling which outputs to JFR file"
+    if [ "$1" == "--help" ]; then
+      echo "usage: $0 diag_async_profiler_profile [pod_name] [start|stop]"
+    fi
+    return 0
+  fi
+  local PODNAME="$1"
+  [ -n "$PODNAME" ] || return 1
+  local COMMAND="$2"
+  case "$COMMAND" in
+    start)
+      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -f /tmp/async_profiler.jfr 1
+      ;;
+    stop)
+      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1
+      ;;
+    status)
+      diag_async_profiler "$PODNAME" status 1
+      ;;
+    *)
+      echo "Unknown command"
+      ;;
+  esac
+}
+
 
 function diag_crictl() {
   if [ "$1" == "--desc" ]; then
