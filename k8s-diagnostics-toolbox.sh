@@ -157,12 +157,16 @@ function diag_async_profiler() {
   fi
 }
 
+function _diag_wait_for_any_key() {
+  read -n 1 -s -r -p "${1:-"Press any key to continue"}"
+}
+
 
 function diag_async_profiler_profile() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
-    echo "Run async-profiler profiling which outputs to JFR file"
+    echo "Run async-profiler profiling in interactive mode"
     if [ "$1" == "--help" ]; then
-      echo "usage: $0 diag_async_profiler_profile [pod_name] [start|stop]"
+      echo "usage: $0 diag_async_profiler_profile [pod_name] [jfr|exceptions|status|]"
     fi
     return 0
   fi
@@ -170,11 +174,26 @@ function diag_async_profiler_profile() {
   [ -n "$PODNAME" ] || return 1
   local COMMAND="$2"
   case "$COMMAND" in
-    start)
+    jfr)
+      echo "Profiling CPU, allocations and locks in JFR format..."
       diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -f /tmp/async_profiler.jfr 1
+      _diag_wait_for_any_key "Press any key to stop profiling..."
+      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1
+      ;;
+    exceptions)
+      echo "Profiling exceptions..."
+      diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace 1
+      _diag_wait_for_any_key "Press any key to stop profiling..."
+      diag_async_profiler "$PODNAME" stop -o tree --reverse -f /tmp/exceptions.html 1
+      ;;
+    exceptions_flamegraph)
+      echo "Profiling exceptions with flamegraph output..."
+      diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace 1
+      _diag_wait_for_any_key "Press any key to stop profiling..."
+      diag_async_profiler "$PODNAME" stop -f /tmp/exceptions.html 1
       ;;
     stop)
-      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1
+      diag_async_profiler "$PODNAME" stop 1
       ;;
     status)
       diag_async_profiler "$PODNAME" status 1
@@ -184,6 +203,7 @@ function diag_async_profiler_profile() {
       ;;
   esac
 }
+
 
 
 function diag_crictl() {
