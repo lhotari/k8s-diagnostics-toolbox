@@ -7,6 +7,8 @@
 # jattach is used for triggering threaddumps and heapdumps and controlling Java Flight Recorder (jfr)
 # async-profiler can be used to profile Java processes running in a container
 #
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
 function diag_nsenter_pod() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
     echo "Uses nsenter to run a program in the pod's OS namespace"
@@ -87,7 +89,7 @@ function diag_jfr() {
   fi
   local PODNAME="$1"
   local COMMAND="$2"
-  local PROFILING_SETTINGS="$3"
+  local PROFILING_SETTINGS="${3:-$SCRIPT_DIR/jfr_profiling_settings.jfc}"
   local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   local ROOT_PATH=$(_diag_find_root_path $CONTAINER)
@@ -105,7 +107,7 @@ function diag_jfr() {
   else
     if [ -f "$PROFILING_SETTINGS" ]; then
       echo "Using profiling settings from $PROFILING_SETTINGS"
-      cp "$PROFILING_SETTINGS" $ROOT_PATH/tmp
+      cp "$PROFILING_SETTINGS" $ROOT_PATH/tmp/profiling.jfc
       $JCMD "JFR.start name=recording settings=/tmp/profiling.jfc"
     else
       $JCMD "JFR.start name=recording settings=profile"
