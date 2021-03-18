@@ -275,7 +275,7 @@ if [[ "$(LC_ALL=C type -t $diag_function_name)" == "function" ]]; then
     exit 1
   fi
   _diag_download_tools
-  eval "$diag_function_name" "$@"
+  "$diag_function_name" "$@"
 else
   echo "Invalid diagnostics tool"
   echo "Available diagnostics tools:"
