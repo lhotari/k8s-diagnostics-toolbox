@@ -74,7 +74,7 @@ function diag_get_threaddump() {
   shift
   local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
-  _diag_jattach_container $CONTAINER threaddump
+  _diag_jattach_container $CONTAINER threaddump -l
 }
 
 function diag_jfr() {
