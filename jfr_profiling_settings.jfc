@@ -737,7 +737,7 @@
         <test name="compiler-level" operator="equal" value="all"/>
       </condition>
 
-      <selection name="method-sampling-interval" default="normal" label="Method Sampling">
+      <selection name="method-sampling-interval" default="high" label="Method Sampling">
         <option label="Off" name="off">off</option>
         <option label="Normal" name="normal">normal</option>
         <option label="High" name="high">high</option>
