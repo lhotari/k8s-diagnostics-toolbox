@@ -38,12 +38,13 @@ sudo ./k8s-diagnostics-toolbox.sh diag_get_heapdump pulsar-broker-0
 
 ### Running async-profiler
 
-Example: Profile CPU for 10 seconds for `pulsar-broker-0` and create a flamegraph
+Example: Start and stop async-profiler for `pulsar-broker-0`
 ```
-sudo ./k8s-diagnostics-toolbox.sh diag_async_profiler pulsar-broker-0 -d 10 -f /tmp/profile.html 1
-# open the flamegraph in a browser
-xdg-open profile*.html
+sudo ./k8s-diagnostics-toolbox.sh diag_async_profiler_profile pulsar-broker-0 jfr
 ```
+This will record CPU, allocations and locks in JFR format and create a flamegraph in html format.
+The JFR file can be further analysed in [JDK Mission Control](https://adoptopenjdk.net/jmc.html).
+
 
 ### Running Java Flight Recorder
 
