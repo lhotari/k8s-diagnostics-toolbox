@@ -202,7 +202,7 @@ function diag_jfr_to_flamegraph() {
   java -cp "$(_diag_tool_cache_dir async-profiler)/build/converter.jar" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
   if [ $? -eq 0 ]; then
     _diag_chown_sudo_user "$FLAMEGRAPH_FILE"
-    echo "Result in $FLAMEGRAPH_FILE"
+    echo "Result in file://$(realpath "$FLAMEGRAPH_FILE")"
   fi
 }
 
