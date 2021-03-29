@@ -173,6 +173,29 @@ function diag_async_profiler() {
   fi
 }
 
+function diag_jfr_to_flamegraph() {
+  if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
+    echo "Creates a flamegraph from a jfr recording"
+    if [ "$1" == "--help" ]; then
+      echo "usage: $0 diag_jfr_to_flamegraph [recording.jfr] [flamegraph.html]"
+    fi
+    return 0
+  fi
+  local JFR_FILE="$1"
+  local FLAMEGRAPH_FILE="$2"
+  if [ ! -f "$JFR_FILE" ]; then
+    echo "File $JFR_FILE doesn't exist."
+    return 1
+  fi
+  if [ -z "$FLAMEGRAPH_FILE" ]; then
+    FLAMEGRAPH_FILE="${JFR_FILE%.*}.html"
+  fi
+  java -cp "$(_diag_tool_cache_dir async-profiler)/build/converter.jar" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
+  if [ $? -eq 0 ]; then
+    echo "Result in $FLAMEGRAPH_FILE"
+  fi
+}
+
 function _diag_wait_for_any_key() {
   read -n 1 -s -r -p "${1:-"Press any key to continue"}"
 }
@@ -337,7 +360,8 @@ fi
 shift
 
 if [[ "$(LC_ALL=C type -t $diag_function_name)" == "function" ]]; then
-  if ! [ $(id -u) = 0 ]; then
+  allow_non_root=(diag_jfr_to_flamegraph)
+  if [[ $(id -u) -ne 0 && ! (" ${allow_non_root[@]} " =~ " ${diag_function_name} ") ]]; then
     echo "The script needs to be run as root." >&2
     exit 1
   fi
