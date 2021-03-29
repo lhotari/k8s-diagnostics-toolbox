@@ -128,7 +128,16 @@ function diag_jfr_profile() {
   echo "Starting JFR profiling..."
   diag_jfr "$PODNAME" start
   _diag_wait_for_any_key "Press any key to stop profiling..."
-  diag_jfr "$PODNAME" stop
+  diag_jfr "$PODNAME" stop | _diag_auto_convert_jfr_file
+}
+
+function _diag_auto_convert_jfr_file() {
+  tee /tmp/jfrstop$$
+  local jfr_file="$(tail -1 /tmp/jfrstop$$)"
+  rm /tmp/jfrstop$$
+  if [ -f "$jfr_file" ]; then
+    diag_jfr_to_flamegraph "$jfr_file"
+  fi
 }
 
 function diag_async_profiler() {
@@ -192,6 +201,7 @@ function diag_jfr_to_flamegraph() {
   fi
   java -cp "$(_diag_tool_cache_dir async-profiler)/build/converter.jar" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
   if [ $? -eq 0 ]; then
+    _diag_chown_sudo_user "$FLAMEGRAPH_FILE"
     echo "Result in $FLAMEGRAPH_FILE"
   fi
 }
@@ -217,7 +227,7 @@ function diag_async_profiler_profile() {
       echo "Profiling CPU, allocations and locks in JFR format..."
       diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f /tmp/async_profiler.jfr 1
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1
+      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1 | _diag_auto_convert_jfr_file
       ;;
     exceptions)
       echo "Profiling exceptions..."
