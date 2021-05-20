@@ -253,8 +253,6 @@ function diag_async_profiler_profile() {
   esac
 }
 
-
-
 function diag_crictl() {
   if [ "$1" == "--desc" ]; then
     echo "Run crictl"
@@ -267,6 +265,46 @@ function diag_crictl() {
   "$(_diag_tool_path crictl)" "$@"
   )
 }
+
+function _diag_upload_encrypted() {
+  local file_name="$1"
+  local recipient="$2"
+  gpg --encrypt --recipient "$recipient" \
+    |curl --progress-bar --upload-file "-" "https://transfer.sh/${file_name}.gpg" \
+    |tee /dev/null
+  echo ""
+}
+
+function diag_transfer(){
+    if [ "$1" == "--desc" ]; then
+    echo "Transfers files with gpg encryption over transfer.sh"
+    return 0
+  fi
+  if [ $# -lt 2 ]; then
+      echo "No arguments specified.\nUsage:\n diag_transfer <file|directory> recipient\n ... | diag_transfer <file_name> recipient">&2
+      return 1
+  fi
+  if tty -s; then
+    local file="$1"
+    local recipient="$2"
+    local file_name=$(basename "$file")
+    if [ ! -e "$file" ]; then
+      echo "$file: No such file or directory">&2
+      return 1
+    fi
+    if [ -d "$file" ]; then
+        file_name="$file_name.zip"
+        (cd "$file" && zip -r -q - .) | _diag_upload_encrypted $file_name $recipient
+    else
+        cat "$file" | _diag_upload_encrypted $file_name $recipient
+    fi
+  else
+    local file_name=$1
+    local recipient="$2"
+    _diag_upload_encrypted $file_name $recipient
+  fi
+}
+
 
 function _diag_find_container_for_pod() {
   local PODNAME="$1"
@@ -376,7 +414,7 @@ fi
 shift
 
 if [[ "$(LC_ALL=C type -t $diag_function_name)" == "function" ]]; then
-  allow_non_root=(diag_jfr_to_flamegraph)
+  allow_non_root=("diag_jfr_to_flamegraph" "diag_transfer")
   if [[ $(id -u) -ne 0 && ! (" ${allow_non_root[@]} " =~ " ${diag_function_name} ") ]]; then
     echo "The script needs to be run as root." >&2
     exit 1
