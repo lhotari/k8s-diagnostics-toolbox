@@ -279,8 +279,14 @@ function _diag_inspect_container_with_template() {
   diag_crictl inspect --template "$TEMPLATE" -o go-template "$CONTAINER"
 }
 
+function _diag_docker_inspect_container_with_template() {
+  local CONTAINER="$1"
+  local TEMPLATE="$2"
+  docker inspect "$CONTAINER" -f "$TEMPLATE"
+}
+
 function _diag_find_container_pid() {
-  _diag_inspect_container_with_template "$1" '{{.info.pid}}'
+  _diag_inspect_container_with_template "$1" '{{.info.pid}}' 2> /dev/null || _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
 }
 
 function _diag_chown_sudo_user() {
@@ -292,7 +298,7 @@ function _diag_chown_sudo_user() {
 
 function _diag_find_root_path() {
   local CONTAINER="$1"
-  local ROOT_PATH=$(_diag_inspect_container_with_template "$CONTAINER" '{{.info.runtimeSpec.root.path}}')
+  local ROOT_PATH=$(_diag_inspect_container_with_template "$CONTAINER" '{{.info.runtimeSpec.root.path}}' 2> /dev/null || echo rootfs)
   if [ "$ROOT_PATH" = "rootfs" ]; then
     ROOT_PATH=/proc/$(_diag_find_container_pid "$CONTAINER")/root
   fi
