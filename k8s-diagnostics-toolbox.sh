@@ -269,7 +269,8 @@ function diag_crictl() {
 function _diag_upload_encrypted() {
   local file_name="$1"
   local recipient="$2"
-  gpg --encrypt --recipient "$recipient" \
+  gpg -k | grep -q "$recipient" &> /dev/null || { echo "Searching for key for $recipient"; gpg --search-keys "$recipient"; }
+  gpg --encrypt --recipient "$recipient" --trust-model always \
     |curl --progress-bar --upload-file "-" "https://transfer.sh/${file_name}.gpg" \
     |tee /dev/null
   echo ""
