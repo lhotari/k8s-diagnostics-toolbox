@@ -270,10 +270,11 @@ function _diag_upload_encrypted() {
   local file_name="$1"
   local recipient="$2"
   gpg -k | grep -q "$recipient" &> /dev/null || { echo "Searching for key for $recipient"; gpg --search-keys "$recipient"; }
-  gpg --encrypt --recipient "$recipient" --trust-model always \
+  local transfer_url=$(gpg --encrypt --recipient "$recipient" --trust-model always \
     |curl --progress-bar --upload-file "-" "https://transfer.sh/${file_name}.gpg" \
-    |tee /dev/null
+    |tee /dev/null)
   echo ""
+  echo "command for receiving: curl $transfer_url | gpg --decrypt > ${file_name}"
 }
 
 function diag_transfer(){
