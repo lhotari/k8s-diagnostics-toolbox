@@ -1,5 +1,16 @@
 # Kubernetes Diagnostics Toolbox for JVM applications
 
+## Installing in remote environments such as AWS EKS
+
+Installing to `/root/k8s-diagnostics-toolbox` when there's `wget` and `unzip` available:
+```
+cd /tmp
+wget https://github.com/lhotari/pulsar-playground/archive/refs/heads/master.zip
+unzip master.zip 
+mv pulsar-playground-master/k8s-diagnostics-toolbox /root/
+rm -rf master.zip pulsar-playground-master/
+```
+
 ## Usage
 
 The tool is designed for running on a k8s node with sudo or as the root user. 
@@ -21,7 +32,7 @@ by the k8s namespace.
 
 First, find out the pod name you are interested in. Listing all pods:
 ```
-kubectl get pods -A
+sudo ./k8s-diagnostics-toolbox.sh diag_crictl pods
 ```
 
 Example: Get the thread dump for `pulsar-broker-0`
