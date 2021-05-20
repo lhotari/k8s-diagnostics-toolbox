@@ -2,13 +2,9 @@
 
 ## Installing in remote environments such as AWS EKS
 
-Installing to `/root/k8s-diagnostics-toolbox` when there's `wget` and `unzip` available:
+One-liner command to installing to `~/k8s-diagnostics-toolbox` when there's `curl` and `tar` available:
 ```
-cd /tmp
-wget https://github.com/lhotari/pulsar-playground/archive/refs/heads/master.zip
-unzip master.zip 
-mv pulsar-playground-master/k8s-diagnostics-toolbox /root/
-rm -rf master.zip pulsar-playground-master/
+cd /tmp && curl -L https://github.com/lhotari/pulsar-playground/archive/refs/heads/master.tar.gz | tar zxvf - && mv pulsar-playground-master/k8s-diagnostics-toolbox ~/ && rm -rf pulsar-playground-master/ && cd ~/k8s-diagnostics-toolbox
 ```
 
 ## Usage
