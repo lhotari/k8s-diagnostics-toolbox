@@ -135,7 +135,7 @@ function _diag_auto_convert_jfr_file() {
   tee /tmp/jfrstop$$
   local jfr_file="$(tail -1 /tmp/jfrstop$$)"
   rm /tmp/jfrstop$$
-  if [ -f "$jfr_file" ]; then
+  if [ -f "$jfr_file" ] && command -v java &> /dev/null; then
     diag_jfr_to_flamegraph "$jfr_file"
   fi
 }
