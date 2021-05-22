@@ -19,7 +19,7 @@ function diag_nsenter() {
   fi
   local PODNAME="$1"
   shift
-  local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   local CONTAINER_PID="$(_diag_find_container_pid $CONTAINER)"
   [ -n "$CONTAINER_PID" ] || return 2
@@ -36,7 +36,7 @@ function diag_jattach() {
   fi
   local PODNAME="$1"
   shift
-  local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   _diag_jattach_container "$CONTAINER"
 }
@@ -51,7 +51,7 @@ function diag_get_heapdump() {
   fi
   local PODNAME="$1"
   shift
-  local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   local ROOT_PATH=$(_diag_find_root_path $CONTAINER)
   [ -n "$ROOT_PATH" ] || return 2
@@ -74,7 +74,7 @@ function diag_get_threaddump() {
   fi
   local PODNAME="$1"
   shift
-  local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   _diag_jattach_container $CONTAINER threaddump -l
 }
@@ -90,7 +90,7 @@ function diag_jfr() {
   local PODNAME="$1"
   local COMMAND="$2"
   local PROFILING_SETTINGS="${3:-$SCRIPT_DIR/jfr_profiling_settings.jfc}"
-  local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   local ROOT_PATH=$(_diag_find_root_path $CONTAINER)
   [ -n "$ROOT_PATH" ] || return 2
@@ -150,7 +150,7 @@ function diag_async_profiler() {
   fi
   local PODNAME="$1"
   shift
-  local CONTAINER="$(_diag_find_container_for_pod $PODNAME)"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   local ROOT_PATH=$(_diag_find_root_path $CONTAINER)
   [ -n "$ROOT_PATH" ] || return 2
@@ -308,7 +308,7 @@ function diag_transfer(){
 }
 
 
-function _diag_find_container_for_pod() {
+function _diag_find_container() {
   local PODNAME="$1"
   diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q
 }
