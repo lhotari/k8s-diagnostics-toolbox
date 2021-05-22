@@ -9,11 +9,11 @@
 #
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-function diag_nsenter_pod() {
+function diag_nsenter() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
     echo "Uses nsenter to run a program in the pod's OS namespace"
     if [ "$1" == "--help" ]; then
-      echo "usage: $0 diag_nsenter_pod [pod_name]"
+      echo "usage: $0 diag_nsenter [pod_name]"
     fi
     return 0
   fi
