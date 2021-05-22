@@ -28,26 +28,26 @@ by the k8s namespace.
 
 First, find out the pod name you are interested in. Listing all pods:
 ```
-sudo ./k8s-diagnostics-toolbox.sh diag_crictl pods
+sudo ./k8s-diagnostics-toolbox.sh crictl pods
 ```
 
 Example: Get the thread dump for `pulsar-broker-0`
 ```
-sudo ./k8s-diagnostics-toolbox.sh diag_get_threaddump pulsar-broker-0
+sudo ./k8s-diagnostics-toolbox.sh get_threaddump pulsar-broker-0
 ```
 
 ### Getting a heap dump
 
 Example: Get the heap dump for `pulsar-broker-0`
 ```
-sudo ./k8s-diagnostics-toolbox.sh diag_get_heapdump pulsar-broker-0
+sudo ./k8s-diagnostics-toolbox.sh get_heapdump pulsar-broker-0
 ```
 
 ### Running async-profiler
 
 Example: Start and stop async-profiler for `pulsar-broker-0`
 ```
-sudo ./k8s-diagnostics-toolbox.sh diag_async_profiler_profile pulsar-broker-0 jfr
+sudo ./k8s-diagnostics-toolbox.sh async_profiler_profile pulsar-broker-0 jfr
 ```
 This will record CPU, allocations and locks in JFR format and create a flamegraph in html format.
 The JFR file can be further analysed in [JDK Mission Control](https://adoptopenjdk.net/jmc.html).
@@ -57,9 +57,9 @@ The JFR file can be further analysed in [JDK Mission Control](https://adoptopenj
 
 Example: Start and stop JFR for `pulsar-broker-0`
 ```
-sudo ./k8s-diagnostics-toolbox.sh diag_jfr pulsar-broker-0 start
+sudo ./k8s-diagnostics-toolbox.sh jfr pulsar-broker-0 start
 sleep 10
-sudo ./k8s-diagnostics-toolbox.sh diag_jfr pulsar-broker-0 stop
+sudo ./k8s-diagnostics-toolbox.sh jfr pulsar-broker-0 stop
 ```
 
 Opening the file in [JDK Mission Control](https://adoptopenjdk.net/jmc.html):

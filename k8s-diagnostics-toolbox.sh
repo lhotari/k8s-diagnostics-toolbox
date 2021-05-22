@@ -399,12 +399,12 @@ function _diag_download_tools() {
 }
 
 function _diag_list_functions() {
-  for function_name in $(declare -F | awk '{print $NF}' | sort | egrep '^diag_'); do
-    printf '%-20s\t%s\n' $function_name "$(eval $function_name --desc)"
+  for function_name in $(declare -F | awk '{print $NF}' | sort | egrep '^diag_' | sed 's/^diag_//'); do
+    printf '%-20s\t%s\n' $function_name "$(eval "diag_${function_name}" --desc)"
   done
 }
 
-diag_function_name=$1
+diag_function_name="diag_${1}"
 if [ -z "$diag_function_name" ]; then
   echo "usage: $0 [tool name] [tool arguments]"
   echo "Pass --help as the argument to get usage information for a tool."
