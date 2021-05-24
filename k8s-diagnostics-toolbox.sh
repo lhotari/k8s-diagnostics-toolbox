@@ -326,7 +326,11 @@ function diag_transfer(){
 function _diag_find_container() {
   local PODNAME="$1"
   if _diag_is_k8s_node; then
-    diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q
+    if [ -S /var/run/dockershim.sock ]; then
+      docker ps -q --filter label=io.kubernetes.docker.type=container --filter label=io.kubernetes.pod.name="$PODNAME" | head -n 1
+    else
+      diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q | head -n 1
+    fi
   else
     { docker ps -q --filter id="$PODNAME"; docker ps -q --filter name="$PODNAME"; }|sort|uniq -u|head -n 1
   fi
