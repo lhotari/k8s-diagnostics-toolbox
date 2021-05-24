@@ -432,6 +432,57 @@ function _diag_is_k8s_node() {
   [ -n "${CONTAINER_RUNTIME_ENDPOINT}" ] || [ -n "${KUBERNETES_SERVICE_HOST}" ] || [ -S /var/snap/microk8s/common/run/containerd.sock ] || [ -S /var/run/dockershim.sock ]
 }
 
+function diag_collect_multiple_dumps() {
+  (
+  if [ "$1" == "--desc" ]; then
+    echo "Collects multiple thread and heap dumps for all JVMs"
+    return 0
+  fi
+  local PODNAME="$1"
+  local CONTAINER="$(_diag_find_container $PODNAME)"
+  [ -n "$CONTAINER" ] || return 1
+
+  # create an inline script that is passed as a parameter to bash inside the container
+  read -r -d '' diag_script <<'EOF'
+  diagdir=$1
+  mkdir $diagdir
+  # loop 3 times
+  for i in 1 2 3; do
+      # wait 3 seconds (if not the 1. round)
+      [ $i -ne 1 ] && { echo "Waiting 3 seconds..."; sleep 3; }
+      # iterate all java processes
+      for javapid in $(jps -q -J-XX:+PerfDisableSharedMem); do
+          # on the first round, collect the full command line used to start the java process
+          if [ $i -eq 1 ]; then
+              java_commandline="$(cat /proc/$javapid/cmdline | xargs -0 echo)"
+              echo "Collecting diagnostics for PID $javapid, ${java_commandline}"        
+              echo "${java_commandline}" > $diagdir/commandline_${javapid}.txt
+              cat /proc/$javapid/environ | xargs -0 -n 1 echo > $diagdir/environment_${javapid}.txt
+          fi
+          # collect the threaddump with additional locking information
+          echo "Creating threaddump..."
+          jstack -l $javapid > $diagdir/threaddump_${javapid}_$(date +%F-%H%M%S).txt        
+          # collect a heap dump on 1. and 3. rounds
+          if [ $i -ne 2 ]; then
+              echo "Creating heapdump..."
+              jmap -dump:format=b,file=$diagdir/heapdump_${javapid}_$(date +%F-%H%M%S).hprof $javapid        
+          fi
+      done
+  done
+EOF
+
+  # run the script and provide the target directory inside the container as an argument
+  _diag_exec_in_container $CONTAINER bash -c "${diag_script}" bash /tmp/diagnostics$$
+
+  # copy collected diagnostics from the container and remove files from the container
+  diagnostics_dir="jvm_diagnostics_${PODNAME}_$(date +%F-%H%M%S)"
+  local ROOT_PATH=$(_diag_find_root_path $CONTAINER)
+  cp -r "${ROOT_PATH}/tmp/diagnostics$$" ${diagnostics_dir} && rm -rf "${ROOT_PATH}/tmp/diagnostics$$"
+  _diag_chown_sudo_user ${diagnostics_dir}
+  echo "diagnostics information in $diagnostics_dir"
+  )
+}
+
 diag_function_name="diag_${1}"
 if [ -z "$diag_function_name" ]; then
   echo "usage: $0 [tool name] [tool arguments]"
