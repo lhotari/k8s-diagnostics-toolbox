@@ -262,6 +262,9 @@ function diag_crictl() {
   if [ -z "$CONTAINER_RUNTIME_ENDPOINT" ] && [ -S /var/snap/microk8s/common/run/containerd.sock ]; then
     export CONTAINER_RUNTIME_ENDPOINT=unix:///var/snap/microk8s/common/run/containerd.sock
   fi
+  if [ -z "$CONTAINER_RUNTIME_ENDPOINT" ] && [ -S /var/run/dockershim.sock ]; then
+    export CONTAINER_RUNTIME_ENDPOINT=unix:///var/run/dockershim.sock
+  fi
   "$(_diag_tool_path crictl)" "$@"
   )
 }
