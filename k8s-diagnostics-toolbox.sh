@@ -159,7 +159,7 @@ function diag_async_profiler() {
   fi
   echo 1 > /proc/sys/kernel/perf_event_paranoid
   echo 0 > /proc/sys/kernel/kptr_restrict
-  (diag_crictl exec -is $CONTAINER /tmp/async-profiler/profiler.sh "$@" && echo "Done.") || echo "Failed."
+  (_diag_exec_in_container $CONTAINER /tmp/async-profiler/profiler.sh "$@" && echo "Done.") || echo "Failed."
   echo "Rootpath $ROOT_PATH"
   if [[ "$1" != "start" ]]; then
     local argc=$#
@@ -181,6 +181,18 @@ function diag_async_profiler() {
     done
   fi
 }
+
+function _diag_exec_in_container() {
+  local CONTAINER=$1
+  shift
+  if _diag_is_k8s_node; then
+    diag_crictl exec -is $CONTAINER "$@"
+  else
+    docker exec -i $CONTAINER "$@"
+  fi
+}
+
+
 
 function diag_jfr_to_flamegraph() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
@@ -313,7 +325,11 @@ function diag_transfer(){
 
 function _diag_find_container() {
   local PODNAME="$1"
-  diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q
+  if _diag_is_k8s_node; then
+    diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q
+  else
+    { docker ps -q --filter id="$PODNAME"; docker ps -q --filter name="$PODNAME"; }|sort|uniq -u|head -n 1
+  fi
 }
 
 function _diag_inspect_container_with_template() {
@@ -329,13 +345,17 @@ function _diag_docker_inspect_container_with_template() {
 }
 
 function _diag_find_container_pid() {
-  _diag_inspect_container_with_template "$1" '{{.info.pid}}' 2> /dev/null || _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
+  if _diag_is_k8s_node; then
+    _diag_inspect_container_with_template "$1" '{{.info.pid}}' 2> /dev/null || _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
+  else
+    _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
+  fi
 }
 
 function _diag_chown_sudo_user() {
   local file="$1"
-  if [[ -f "$file" && -n "$SUDO_USER" ]]; then
-    chown $SUDO_USER "$file"
+  if [[ -e "$file" && -n "$SUDO_USER" ]]; then
+    chown -R $SUDO_USER "$file"
   fi
 }
 
@@ -353,7 +373,8 @@ function _diag_jattach_container() {
   shift
   local CONTAINER_PID="$(_diag_find_container_pid $CONTAINER)"
   [ -n "$CONTAINER_PID" ] || return 1
-  "$(_diag_tool_path jattach)" $CONTAINER_PID "$@"
+  local JAVA_PID=$(pgrep --ns $CONTAINER_PID java | head -n 1 || echo $CONTAINER_PID)
+  "$(_diag_tool_path jattach)" $JAVA_PID "$@"
 }
 
 function _diag_tool_path() {
@@ -405,6 +426,10 @@ function _diag_list_functions() {
   for function_name in $(declare -F | awk '{print $NF}' | sort | egrep '^diag_' | sed 's/^diag_//'); do
     printf '%-20s\t%s\n' $function_name "$(eval "diag_${function_name}" --desc)"
   done
+}
+
+function _diag_is_k8s_node() {
+  [ -n "${CONTAINER_RUNTIME_ENDPOINT}" ] || [ -n "${KUBERNETES_SERVICE_HOST}" ] || [ -S /var/snap/microk8s/common/run/containerd.sock ] || [ -S /var/run/dockershim.sock ]
 }
 
 diag_function_name="diag_${1}"
