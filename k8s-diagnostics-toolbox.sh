@@ -455,7 +455,7 @@ function diag_collect_multiple_dumps() {
       # wait 3 seconds (if not the 1. round)
       [ $i -ne 1 ] && { echo "Waiting 3 seconds..."; sleep 3; }
       # iterate all java processes
-      for javapid in $(pgrep java); do
+      for javapid in $(pgrep java 2> /dev/null || jps -q -J-XX:+PerfDisableSharedMem); do
           # on the first round, collect the full command line used to start the java process
           if [ $i -eq 1 ]; then
               java_commandline="$(cat /proc/$javapid/cmdline | xargs -0 echo)"
