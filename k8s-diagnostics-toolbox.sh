@@ -310,8 +310,8 @@ function diag_transfer(){
       return 1
     fi
     if [ -d "$file" ]; then
-        file_name="$file_name.zip"
-        (cd "$file" && zip -r -q - .) | _diag_upload_encrypted $file_name $recipient
+        file_name="${file_name}.tar.gz"
+        tar zcf - "$file" | _diag_upload_encrypted $file_name $recipient
     else
         cat "$file" | _diag_upload_encrypted $file_name $recipient
     fi
