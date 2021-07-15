@@ -191,7 +191,7 @@ function _diag_exec_in_container() {
     if ! [[ "$CONTAINER" =~ ^[0-9]+$ ]]; then
       docker exec -i $CONTAINER "$@"
     else
-      "$@"
+      nsenter -t "$CONTAINER" -a "$@"
     fi
   fi
 }
