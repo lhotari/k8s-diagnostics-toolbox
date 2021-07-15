@@ -10,7 +10,12 @@ mkdir -p ~/k8s-diagnostics-toolbox && cd ~/k8s-diagnostics-toolbox && curl -L ht
 ## Usage
 
 The tool is designed for running on a k8s node with sudo or as the root user. 
-When using microk8s, the local machine is the k8s node. 
+When using microk8s, the local machine is the k8s node.
+
+The tool has also support for profiling applications running as normal processes or within docker.
+When the given parameter is a numeric value, it is expected to be a process id on the host machine.
+Profiling in docker containers requires that the container has been started with `--cap-add SYS_ADMIN` 
+since the [default seccomp profile for docker](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json) blocks `perf_event_open` calls.
 
 ### Listing all available tools
 
@@ -30,11 +35,21 @@ First, find out the pod name you are interested in. Listing all pods:
 ```
 sudo ./k8s-diagnostics-toolbox.sh crictl pods
 ```
+or list all Java process ids on the host:
+```
+sudo ./k8s-diagnostics-toolbox.sh list_java_pids
+```
 
 Example: Get the thread dump for `pulsar-broker-0`
 ```
 sudo ./k8s-diagnostics-toolbox.sh get_threaddump pulsar-broker-0
 ```
+
+Example: Get the thread dump for process id `1234`
+```
+sudo ./k8s-diagnostics-toolbox.sh get_threaddump 1234
+```
+
 
 ### Getting a heap dump
 
