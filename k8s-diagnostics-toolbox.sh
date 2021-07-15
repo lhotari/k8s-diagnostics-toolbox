@@ -188,7 +188,11 @@ function _diag_exec_in_container() {
   if _diag_is_k8s_node; then
     diag_crictl exec -is $CONTAINER "$@"
   else
-    docker exec -i $CONTAINER "$@"
+    if ! [[ "$CONTAINER" =~ ^[0-9]+$ ]]; then
+      docker exec -i $CONTAINER "$@"
+    else
+      "$@"
+    fi
   fi
 }
 
@@ -234,30 +238,34 @@ function diag_async_profiler_profile() {
   local PODNAME="$1"
   [ -n "$PODNAME" ] || return 1
   local COMMAND="$2"
+  local PROFILEPID=1
+  if [[ "$PODNAME" =~ ^[0-9]+$ ]]; then
+    PROFILEPID="$PODNAME"
+  fi
   case "$COMMAND" in
     jfr)
       echo "Profiling CPU, allocations and locks in JFR format..."
-      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f /tmp/async_profiler.jfr 1
+      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f /tmp/async_profiler.jfr "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr 1 | _diag_auto_convert_jfr_file
+      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr "$PROFILEPID" | _diag_auto_convert_jfr_file
       ;;
     exceptions)
       echo "Profiling exceptions..."
-      diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace 1
+      diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -o tree --reverse -f /tmp/exceptions.html 1
+      diag_async_profiler "$PODNAME" stop -o tree --reverse -f /tmp/exceptions.html "$PROFILEPID"
       ;;
     exceptions_flamegraph)
       echo "Profiling exceptions with flamegraph output..."
-      diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace 1
+      diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -f /tmp/exceptions.html 1
+      diag_async_profiler "$PODNAME" stop -f /tmp/exceptions.html "$PROFILEPID"
       ;;
     stop)
-      diag_async_profiler "$PODNAME" stop 1
+      diag_async_profiler "$PODNAME" stop "$PROFILEPID"
       ;;
     status)
-      diag_async_profiler "$PODNAME" status 1
+      diag_async_profiler "$PODNAME" status "$PROFILEPID"
       ;;
     *)
       echo "Unknown command"
@@ -332,7 +340,11 @@ function _diag_find_container() {
       diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q | head -n 1
     fi
   else
-    { docker ps -q --filter id="$PODNAME"; docker ps -q --filter name="$PODNAME"; }|sort|uniq -u|head -n 1
+    if [[ "$PODNAME" =~ ^[0-9]+$ ]]; then
+      echo "$PODNAME"
+    else
+      { docker ps -q --filter id="$PODNAME"; docker ps -q --filter name="$PODNAME"; }|sort|uniq -u|head -n 1
+    fi
   fi
 }
 
@@ -352,7 +364,11 @@ function _diag_find_container_pid() {
   if _diag_is_k8s_node; then
     _diag_inspect_container_with_template "$1" '{{.info.pid}}' 2> /dev/null || _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
   else
-    _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+      echo "$1"
+    else
+      _diag_docker_inspect_container_with_template "$1" '{{.State.Pid}}'
+    fi
   fi
 }
 
@@ -365,19 +381,28 @@ function _diag_chown_sudo_user() {
 
 function _diag_find_root_path() {
   local CONTAINER="$1"
-  local ROOT_PATH=$(_diag_inspect_container_with_template "$CONTAINER" '{{.info.runtimeSpec.root.path}}' 2> /dev/null || echo rootfs)
-  if [ "$ROOT_PATH" = "rootfs" ]; then
-    ROOT_PATH=/proc/$(_diag_find_container_pid "$CONTAINER")/root
+  if ! [[ "$CONTAINER" =~ ^[0-9]+$ ]]; then
+    local ROOT_PATH=$(_diag_inspect_container_with_template "$CONTAINER" '{{.info.runtimeSpec.root.path}}' 2> /dev/null || echo rootfs)
+    if [ "$ROOT_PATH" = "rootfs" ]; then
+      ROOT_PATH=/proc/$(_diag_find_container_pid "$CONTAINER")/root
+    fi
+    echo $ROOT_PATH
+  else
+    echo "/proc/$CONTAINER/root"
   fi
-  echo $ROOT_PATH
 }
 
 function _diag_jattach_container() {
   local CONTAINER="$1"
   shift
-  local CONTAINER_PID="$(_diag_find_container_pid $CONTAINER)"
-  [ -n "$CONTAINER_PID" ] || return 1
-  local JAVA_PID=$(pgrep --ns $CONTAINER_PID java | head -n 1 || echo $CONTAINER_PID)
+  local JAVA_PID
+  if ! [[ "$CONTAINER" =~ ^[0-9]+$ ]]; then
+    local CONTAINER_PID="$(_diag_find_container_pid $CONTAINER)"
+    [ -n "$CONTAINER_PID" ] || return 1
+    JAVA_PID=$(pgrep --ns $CONTAINER_PID java | head -n 1 || echo $CONTAINER_PID)
+  else
+    JAVA_PID=$CONTAINER
+  fi
   "$(_diag_tool_path jattach)" $JAVA_PID "$@"
 }
 
@@ -486,6 +511,17 @@ EOF
   echo "diagnostics information in $diagnostics_dir"
   )
 }
+
+function diag_list_java_pids() {
+  (
+  if [ "$1" == "--desc" ]; then
+    echo "Lists the host process ids for all Java processes"
+    return 0
+  fi
+  pgrep -a java
+  )
+}
+
 
 diag_function_name="diag_${1}"
 if [ -z "$diag_function_name" ]; then
