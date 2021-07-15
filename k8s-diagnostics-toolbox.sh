@@ -240,7 +240,8 @@ function diag_async_profiler_profile() {
   local COMMAND="$2"
   local PROFILEPID=1
   if [[ "$PODNAME" =~ ^[0-9]+$ ]]; then
-    PROFILEPID="$PODNAME"
+    # get pid inside container
+    PROFILEPID=$(grep NStgid /proc/"$PODNAME"/status | perl -p -e 's/^.*\s(\d+)$/$1/')
   fi
   case "$COMMAND" in
     jfr)
