@@ -7,6 +7,17 @@ One-liner command to installing to `~/k8s-diagnostics-toolbox` when there's `cur
 mkdir -p ~/k8s-diagnostics-toolbox && cd ~/k8s-diagnostics-toolbox && curl -L https://github.com/lhotari/k8s-diagnostics-toolbox/archive/refs/heads/master.tar.gz | tar -zxv --strip-components=1 -f -
 ```
 
+### Installing in GCP/GKE
+
+In GKE, the root filesystem on k8s worker nodes is read-only. As a workaround, the tooling can be installed by creating a directory in a suitable location which allows writing and executing files. One such location is under `/home/kubernetes/bin`.
+
+Run this before installing with the above command:
+```
+mkdir /home/kubernetes/bin/k8sdiag
+export HOME=/home/kubernetes/bin/k8sdiag
+cd 
+```
+
 ## Usage
 
 The tool is designed for running on a k8s node with sudo or as the root user. 
