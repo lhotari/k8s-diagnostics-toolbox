@@ -291,7 +291,23 @@ function diag_crictl() {
 }
 
 function gpg() {
-  /tmp/gnupg/bin/gpg "$@"
+  if ! type -P gpg &>/dev/null; then
+    _diag_download_tool gpg "https://github.com/lhotari/lean-static-gpg/releases/download/v2.3.1/gnupg.tar.gz" 1 1
+    # staticly compiled gpg expects to find other binaries in /tmp/gnupg
+    if [ ! -e /tmp/gnupg ]; then
+      ln -s "$(_diag_tool_path gpg .)" /tmp/gnupg
+    fi
+    if [ ! -f ~/.gnupg/gpg.conf ]; then
+      mkdir -p ~/.gnupg
+      chmod 0700 ~/.gnupg
+      cat > ~/.gnupg/gpg.conf <<EOF
+  keyserver keyserver.ubuntu.com
+EOF
+    fi
+    /tmp/gnupg/bin/gpg "$@"
+  else
+    command gpg "$@"
+  fi  
 }
 
 function _diag_upload_encrypted() {
@@ -458,18 +474,6 @@ function _diag_download_tools() {
   _diag_download_tool jattach "https://github.com/apangin/jattach/releases/download/v2.0/jattach"
   _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.5/async-profiler-2.5-linux-x64.tar.gz" 1
   _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.22.0/crictl-v1.22.0-linux-amd64.tar.gz" 1 0
-  _diag_download_tool gpg "https://github.com/lhotari/lean-static-gpg/releases/download/v2.3.1/gnupg.tar.gz" 1 1
-  # staticly compiled gpg expects to find other binaries in /tmp/gnupg
-  if [ ! -e /tmp/gnupg ]; then
-    ln -s "$(_diag_tool_path gpg .)" /tmp/gnupg
-  fi
-  if [ ! -f ~/.gnupg/gpg.conf ]; then
-    mkdir -p ~/.gnupg
-    chmod 0700 ~/.gnupg
-    cat > ~/.gnupg/gpg.conf <<EOF
-keyserver keyserver.ubuntu.com
-EOF
-  fi
 }
 
 function _diag_list_functions() {
