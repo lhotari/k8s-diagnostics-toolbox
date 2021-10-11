@@ -238,10 +238,13 @@ function diag_async_profiler_profile() {
   local PODNAME="$1"
   [ -n "$PODNAME" ] || return 1
   local COMMAND="$2"
-  local PROFILEPID=1
+  local PROFILEPID
   if [[ "$PODNAME" =~ ^[0-9]+$ ]]; then
     # get pid inside container
     PROFILEPID=$(grep NStgid /proc/"$PODNAME"/status | perl -p -e 's/^.*\s(\d+)$/$1/')
+  else
+    # default to pid 1, but allow overriding with JAVAPID variable
+    PROFILEPID="${JAVAPID:-1}"
   fi
   case "$COMMAND" in
     jfr)
