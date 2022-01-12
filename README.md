@@ -81,6 +81,8 @@ The JFR file can be further analysed in [JDK Mission Control](https://adoptopenj
 
 ### Running Java Flight Recorder
 
+Please notice that you need to have `-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:FlightRecorderOptions=stackdepth=1024` in your application's JVM options to get accurate results with JFR.
+
 Example: Start and stop JFR for `pulsar-broker-0`
 ```
 sudo ./k8s-diagnostics-toolbox.sh jfr pulsar-broker-0 start
