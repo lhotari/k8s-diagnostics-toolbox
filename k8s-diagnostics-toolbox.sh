@@ -26,6 +26,14 @@ function diag_nsenter() {
   nsenter -t "$CONTAINER_PID" "$@"
 }
 
+function diag_netstat_all() {
+  if [ "$1" == "--desc" ]; then
+    echo "Run netstat for all containers."
+    return 0
+  fi
+  ip -all netns exec bash -c "ip a; netstat -tapn"
+}
+
 function diag_jattach() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
     echo "Run jattach for the initial pid of the pod"
