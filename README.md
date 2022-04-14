@@ -76,7 +76,7 @@ Example: Start and stop async-profiler for `pulsar-broker-0`
 sudo ./k8s-diagnostics-toolbox.sh async_profiler_profile pulsar-broker-0 jfr
 ```
 This will record CPU, allocations and locks in JFR format and create a flamegraph in html format.
-The JFR file can be further analysed in [JDK Mission Control](https://adoptopenjdk.net/jmc.html).
+The JFR file can be further analysed in [JDK Mission Control](https://adoptium.net/jmc/).
 
 
 ### Running Java Flight Recorder
@@ -90,9 +90,9 @@ sleep 10
 sudo ./k8s-diagnostics-toolbox.sh jfr pulsar-broker-0 stop
 ```
 
-Opening the file in [JDK Mission Control](https://adoptopenjdk.net/jmc.html):
+Opening the file in [JDK Mission Control](https://adoptium.net/jmc/):
 ```
 # open the file in JDK Mission Control (JMC)
-# download JMC from https://adoptopenjdk.net/jmc.html
+# download JMC from https://adoptium.net/jmc/
 jmc -open recording*.jfr
 ```
