@@ -301,6 +301,14 @@ function diag_crictl() {
   )
 }
 
+function diag_list_pods() {
+  if [ "$1" == "--desc" ]; then
+    echo "Lists all pods running on the node"
+    return 0
+  fi
+  diag_crictl pods
+}
+
 function gpg() {
   if ! type -P gpg &>/dev/null; then
     _diag_download_tool gpg "https://github.com/lhotari/lean-static-gpg/releases/download/v2.3.1/gnupg.tar.gz" 1 1
