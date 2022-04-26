@@ -369,6 +369,13 @@ function _diag_find_container() {
     if [ -S /var/run/dockershim.sock ]; then
       docker ps -q --filter label=io.kubernetes.docker.type=container --filter label=io.kubernetes.pod.name="$PODNAME" | head -n 1
     else
+      if [[ "$PODNAME" =~ ^[0-9a-f]+$ ]]; then
+        local containerid=$(diag_crictl ps --id "$PODNAME" -q | head -n 1)
+        if [[ -n "$containerid" ]]; then
+          echo "$containerid"
+          return 0
+        fi
+      fi
       diag_crictl ps --label "io.kubernetes.pod.name=${PODNAME}" -q | head -n 1
     fi
   else
