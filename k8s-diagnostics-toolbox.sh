@@ -267,10 +267,11 @@ function diag_async_profiler_profile() {
     # default to pid 1, but allow overriding with JAVAPID variable
     PROFILEPID="${JAVAPID:-1}"
   fi
+  ASYNC_PROFILER_OPTIONS="${ASYNC_PROFILER_OPTIONS:-"-e cpu,alloc,lock -i 1ms"}"
   case "$COMMAND" in
     jfr)
-      echo "Profiling CPU, allocations and locks in JFR format..."
-      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
+      echo "Profiling CPU, allocations and locks in JFR format with options $ASYNC_PROFILER_OPTIONS"
+      diag_async_profiler "$PODNAME" start $ASYNC_PROFILER_OPTIONS -o jfr -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
       diag_async_profiler "$PODNAME" stop -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID" | _diag_auto_convert_jfr_file
       ;;
@@ -315,11 +316,13 @@ function diag_async_profiler_profile_many() {
   local PODNAMES="$(diag_crictl pods --label "$LABEL" -o json | "$(_diag_tool_path jq)" -r '.items[] | .metadata.name')"
   echo "Matching pods are $PODNAMES"
 
+  ASYNC_PROFILER_OPTIONS="${ASYNC_PROFILER_OPTIONS:-"-e cpu,alloc,lock -i 1ms"}"
+
   case "$COMMAND" in
     jfr)
-      echo "Profiling CPU, allocations and locks in JFR format..."
+      echo "Profiling CPU, allocations and locks in JFR format with options $ASYNC_PROFILER_OPTIONS"
       for PODNAME in $PODNAMES; do
-        diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
+        diag_async_profiler "$PODNAME" start $ASYNC_PROFILER_OPTIONS -o jfr -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
       done
       _diag_wait_for_any_key "Press any key to stop profiling..."
       for PODNAME in $PODNAMES; do
