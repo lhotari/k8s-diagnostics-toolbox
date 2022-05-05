@@ -270,27 +270,91 @@ function diag_async_profiler_profile() {
   case "$COMMAND" in
     jfr)
       echo "Profiling CPU, allocations and locks in JFR format..."
-      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f /tmp/async_profiler.jfr "$PROFILEPID"
+      diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -f /tmp/async_profiler.jfr "$PROFILEPID" | _diag_auto_convert_jfr_file
+      diag_async_profiler "$PODNAME" stop -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID" | _diag_auto_convert_jfr_file
       ;;
     exceptions)
       echo "Profiling exceptions..."
       diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -o tree --reverse -f /tmp/exceptions.html "$PROFILEPID"
+      diag_async_profiler "$PODNAME" stop -o tree --reverse -f "/tmp/${PODNAME}_exceptions.html" "$PROFILEPID"
       ;;
     exceptions_flamegraph)
       echo "Profiling exceptions with flamegraph output..."
       diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
-      diag_async_profiler "$PODNAME" stop -f /tmp/exceptions.html "$PROFILEPID"
+      diag_async_profiler "$PODNAME" stop -f "/tmp/${PODNAME}_exceptions.html" "$PROFILEPID"
       ;;
     stop)
       diag_async_profiler "$PODNAME" stop "$PROFILEPID"
       ;;
     status)
       diag_async_profiler "$PODNAME" status "$PROFILEPID"
+      ;;
+    *)
+      echo "Unknown command"
+      ;;
+  esac
+}
+
+function diag_async_profiler_profile_many() {
+  if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
+    echo "Run async-profiler profiling in interactive mode for all pods with a specific label"
+    if [ "$1" == "--help" ]; then
+      echo "usage: $0 diag_async_profiler_profile_many [label] [jfr|exceptions|status|]"
+    fi
+    return 0
+  fi
+  local LABEL="$1"
+  [ -n "$LABEL" ] || return 1
+  local COMMAND="$2"
+  # default to pid 1, but allow overriding with JAVAPID variable
+  local PROFILEPID="${JAVAPID:-1}"
+
+  local PODNAMES="$(diag_crictl pods --label "$LABEL" -o json | "$(_diag_tool_path jq)" -r '.items[] | .metadata.name')"
+  echo "Matching pods are $PODNAMES"
+
+  case "$COMMAND" in
+    jfr)
+      echo "Profiling CPU, allocations and locks in JFR format..."
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" start -e cpu,alloc,lock -o jfr -i 1ms -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
+      done
+      _diag_wait_for_any_key "Press any key to stop profiling..."
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" stop -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID" | _diag_auto_convert_jfr_file
+      done
+      ;;
+    exceptions)
+      echo "Profiling exceptions..."
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace "$PROFILEPID"
+      done
+      _diag_wait_for_any_key "Press any key to stop profiling..."
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" stop -o tree --reverse -f "/tmp/${PODNAME}_exceptions.html" "$PROFILEPID"
+      done
+      ;;
+    exceptions_flamegraph)
+      echo "Profiling exceptions with flamegraph output..."
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" start -e Java_java_lang_Throwable_fillInStackTrace "$PROFILEPID"
+      done
+      _diag_wait_for_any_key "Press any key to stop profiling..."
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" stop -f "/tmp/${PODNAME}_exceptions.html" "$PROFILEPID"
+      done
+      ;;
+    stop)
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" stop "$PROFILEPID"
+      done
+      ;;
+    status)
+      for PODNAME in $PODNAMES; do
+        diag_async_profiler "$PODNAME" status "$PROFILEPID"
+      done
       ;;
     *)
       echo "Unknown command"
@@ -513,6 +577,7 @@ function _diag_download_tools() {
   _diag_download_tool jattach "https://github.com/apangin/jattach/releases/download/v2.0/jattach"
   _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.7/async-profiler-2.7-linux-x64.tar.gz" 1
   _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.22.0/crictl-v1.22.0-linux-amd64.tar.gz" 1 0
+  _diag_download_tool jq "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
 }
 
 function _diag_list_functions() {
