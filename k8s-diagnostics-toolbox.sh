@@ -26,6 +26,19 @@ function diag_nsenter() {
   nsenter -t "$CONTAINER_PID" "$@"
 }
 
+function diag_shell() {
+  if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
+    echo "Get a root shell inside the pod"
+    if [ "$1" == "--help" ]; then
+      echo "usage: $0 diag_shell [pod_name]"
+    fi
+    return 0
+  fi
+  local PODNAME="$1"
+  shift
+  diag_nsenter "$PODNAME" --all "$@"
+}
+
 function diag_netstat_all() {
   if [ "$1" == "--desc" ]; then
     echo "Run netstat for all containers."
