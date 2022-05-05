@@ -498,7 +498,7 @@ function _diag_download_tool() {
 
 function _diag_download_tools() {
   _diag_download_tool jattach "https://github.com/apangin/jattach/releases/download/v2.0/jattach"
-  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.5/async-profiler-2.5-linux-x64.tar.gz" 1
+  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.7/async-profiler-2.7-linux-x64.tar.gz" 1
   _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.22.0/crictl-v1.22.0-linux-amd64.tar.gz" 1 0
 }
 
