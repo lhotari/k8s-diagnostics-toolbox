@@ -406,7 +406,7 @@ EOF
     /tmp/gnupg/bin/gpg "$@"
   else
     command gpg "$@"
-  fi  
+  fi
 }
 
 function _diag_upload_encrypted() {
@@ -578,7 +578,7 @@ function _diag_download_tool() {
 
 function _diag_download_tools() {
   _diag_download_tool jattach "https://github.com/apangin/jattach/releases/download/v2.0/jattach"
-  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.8.3/async-profiler-2.8.3-linux-x64.tar.gz" 1
+  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.9/async-profiler-2.9-linux-x64.tar.gz" 1
   _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.22.0/crictl-v1.22.0-linux-amd64.tar.gz" 1 0
   _diag_download_tool jq "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
 }
@@ -616,17 +616,17 @@ function diag_collect_multiple_dumps() {
           # on the first round, collect the full command line used to start the java process
           if [ $i -eq 1 ]; then
               java_commandline="$(cat /proc/$javapid/cmdline | xargs -0 echo)"
-              echo "Collecting diagnostics for PID $javapid, ${java_commandline}"        
+              echo "Collecting diagnostics for PID $javapid, ${java_commandline}"
               echo "${java_commandline}" > $diagdir/commandline_${javapid}.txt
               cat /proc/$javapid/environ | xargs -0 -n 1 echo > $diagdir/environment_${javapid}.txt
           fi
           # collect the threaddump with additional locking information
           echo "Creating threaddump..."
-          jstack -l $javapid > $diagdir/threaddump_${javapid}_$(date +%F-%H%M%S).txt        
+          jstack -l $javapid > $diagdir/threaddump_${javapid}_$(date +%F-%H%M%S).txt
           # collect a heap dump on 1. and 3. rounds
           if [ $i -ne 2 ]; then
               echo "Creating heapdump..."
-              jmap -dump:format=b,file=$diagdir/heapdump_${javapid}_$(date +%F-%H%M%S).hprof $javapid        
+              jmap -dump:format=b,file=$diagdir/heapdump_${javapid}_$(date +%F-%H%M%S).hprof $javapid
           fi
       done
   done
