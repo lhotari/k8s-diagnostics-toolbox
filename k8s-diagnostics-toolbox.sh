@@ -161,6 +161,13 @@ function _diag_auto_convert_jfr_file() {
   fi
 }
 
+function _diag_get_pod_docker_image_tag(){
+    PODNAME=${1}
+    CONTAINER=$(_diag_find_container ${PODNAME})
+    DOCKER_IMAGE=$(_diag_inspect_container_with_template ${CONTAINER} '{{.status.image.image}}')
+    echo ${DOCKER_IMAGE/*:}
+}
+
 function diag_async_profiler() {
   if [[ "$1" == "--desc" || "$1" == "--help" ]]; then
     echo "Run async-profiler for the pod's initial pid"
@@ -171,6 +178,7 @@ function diag_async_profiler() {
   fi
   local PODNAME="$1"
   shift
+  SSH_FETCH=${SSH_FETCH:-0}
   local CONTAINER="$(_diag_find_container $PODNAME)"
   [ -n "$CONTAINER" ] || return 1
   local ROOT_PATH=$(_diag_find_root_path $CONTAINER)
@@ -185,21 +193,30 @@ function diag_async_profiler() {
   if [[ "$1" != "start" ]]; then
     local argc=$#
     local argv=("$@")
+    local asyncprofilercommand="cpu"
     for (( i=0; i<argc; i++ )); do
         if [[ "${argv[i]}" == "-f" ]]; then
           local nextarg=$((i+1))
           local fileparam="${argv[nextarg]}"
-          if [ -f "$ROOT_PATH/$fileparam" ]; then
-            local filename=$(basename -- "$fileparam")
-            local extension="${filename##*.}"
-            local filename="${filename%.*}"
-            local target_filename="${filename}_$(date +%F-%H%M%S).${extension}"
-            mv "$ROOT_PATH/$fileparam" "$target_filename"
-            _diag_chown_sudo_user "$target_filename"
-            echo "$target_filename"
-          fi
+        fi
+        if [[ "${argv[i]}" == "-e" ]]; then
+          local nextarg=$((i+1))
+          asyncprofilercommand="${argv[nextarg]}"
         fi
     done
+    if [[ -f "$ROOT_PATH/$fileparam" ]]; then
+        local filename=$(basename -- "$fileparam")
+        local extension="${filename##*.}"
+        local filename="${filename%.*}"
+        local target_filename="${filename}_${asyncprofilercommand}_$(_diag_get_pod_docker_image_tag ${PODNAME})_${PODNAME}_$(date +%F-%H%M%S).${extension}"
+        mv "$ROOT_PATH/$fileparam" "$target_filename"
+        _diag_chown_sudo_user "$target_filename"
+        if [[ $SSH_FETCH == 1 ]]; then
+            echo "root@$(uname -n):$SCRIPT_DIR/$target_filename"
+        else
+            echo "$target_filename"
+        fi
+    fi
   fi
 }
 
