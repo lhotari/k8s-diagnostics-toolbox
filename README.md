@@ -80,7 +80,7 @@ This will record CPU, allocations and locks in JFR format and create a flamegrap
 
 Example: Profile the CPU used by `pulsar-broker-0` for 30 seconds
 ```
-./k8s-diagnostics-toolbox.sh diag_async_profiler pulsar-broker-0 -t -e cpu,lock -d 30 -f /tmp/profile.jfr 1
+./k8s-diagnostics-toolbox.sh async_profiler pulsar-broker-0 -t -e cpu,lock -d 30 -f /tmp/profile.jfr 1
 ```
 This will record CPU and create a flamegraph in JFR format in the toolbox home. The resulting flamegraph file name is 
 ```
