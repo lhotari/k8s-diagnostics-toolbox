@@ -189,15 +189,14 @@ function diag_async_profiler() {
         if [[ "${argv[i]}" == "-f" ]]; then
           local nextarg=$((i+1))
           local fileparam="${argv[nextarg]}"
-          if [ -f "$ROOT_PATH/$fileparam" ]; then
-            local filename=$(basename -- "$fileparam")
-            local extension="${filename##*.}"
-            local filename="${filename%.*}"
-            local target_filename="${filename}_$(date +%F-%H%M%S).${extension}"
-            mv "$ROOT_PATH/$fileparam" "$target_filename"
-            _diag_chown_sudo_user "$target_filename"
-            echo "$target_filename"
-          fi
+          [[ ! -f "$ROOT_PATH/$fileparam" ]] && touch "$ROOT_PATH/$fileparam"
+          local filename=$(basename -- "$fileparam")
+          local extension="${filename##*.}"
+          local filename="${filename%.*}"
+          local target_filename="${filename}_$(date +%F-%H%M%S).${extension}"
+          mv "$ROOT_PATH/$fileparam" "$target_filename"
+          _diag_chown_sudo_user "$target_filename"
+          echo "$target_filename"
         fi
     done
   fi
