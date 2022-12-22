@@ -201,7 +201,7 @@ function diag_async_profiler() {
         fi
         if [[ "${argv[i]}" == "-e" ]]; then
           local nextarg=$((i+1))
-          asyncprofilercommand="${argv[nextarg]}"
+          asyncprofilercommand="${argv[nextarg]/,/-}"
         fi
     done
     if [[ -f "$ROOT_PATH/$fileparam" ]]; then
