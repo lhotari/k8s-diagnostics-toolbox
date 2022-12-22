@@ -193,7 +193,7 @@ function diag_async_profiler() {
             local filename=$(basename -- "$fileparam")
             local extension="${filename##*.}"
             local filename="${filename%.*}"
-            local target_filename="${filename}_$(date +%F-%H%M%S).${extension}"
+            local target_filename="${filename}_${PODNAME}_$(date +%F-%H%M%S).${extension}"
             mv "$ROOT_PATH/$fileparam" "$target_filename"
             _diag_chown_sudo_user "$target_filename"
             echo "$target_filename"
