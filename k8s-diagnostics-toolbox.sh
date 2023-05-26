@@ -414,15 +414,15 @@ function _diag_upload_encrypted() {
   local recipient="$2"
   gpg -k "$recipient" &> /dev/null || gpg --recv-key "$recipient" &> /dev/null || { echo "Searching for key for $recipient"; gpg --search-keys "$recipient"; }
   local transfer_url=$(gpg --encrypt --recipient "$recipient" --trust-model always \
-    |curl --progress-bar --upload-file "-" "https://transfer.sh/${file_name}.gpg" \
-    |tee /dev/null)
+    |curl --progress-bar -F "data=@-;filename=${file_name}.gpg" https://file.io \
+    |"$(_diag_tool_path jq)" -r '.link')
   echo ""
   echo "command for receiving: curl $transfer_url | gpg --decrypt > ${file_name}"
 }
 
 function diag_transfer(){
     if [ "$1" == "--desc" ]; then
-    echo "Transfers files with gpg encryption over transfer.sh"
+    echo "Transfers files with gpg encryption over file.io"
     return 0
   fi
   if [ $# -lt 2 ]; then
