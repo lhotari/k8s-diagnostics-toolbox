@@ -76,8 +76,18 @@ Example: Start and stop async-profiler for `pulsar-broker-0`
 sudo ./k8s-diagnostics-toolbox.sh async_profiler_profile pulsar-broker-0 jfr
 ```
 This will record CPU, allocations and locks in JFR format and create a flamegraph in html format.
-The JFR file can be further analysed in [JDK Mission Control](https://adoptium.net/jmc/).
 
+
+Example: Profile the CPU used by `pulsar-broker-0` for 30 seconds
+```
+./k8s-diagnostics-toolbox.sh async_profiler pulsar-broker-0 -t -e cpu,lock,alloc -d 30 -f /tmp/profile.jfr 1
+```
+This will record CPU and create a flamegraph in JFR format in the toolbox home. The resulting flamegraph file name is 
+```
+profile_cpu-lock-alloc_<docker_image_of_profiled_container>_pulsar-broker-0_<hourMinuteSecond_of_observation>.jfr
+```
+> Note: the file passed to the `diag_async_profiler` via the flag `-f` must be specified as an absolute path.
+JFR files can be further analysed in [JDK Mission Control](https://adoptium.net/jmc/).
 
 ### Running Java Flight Recorder
 
