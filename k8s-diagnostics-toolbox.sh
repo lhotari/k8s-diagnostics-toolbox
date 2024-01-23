@@ -577,10 +577,12 @@ function _diag_download_tool() {
 }
 
 function _diag_download_tools() {
-  _diag_download_tool jattach "https://github.com/apangin/jattach/releases/download/v2.0/jattach"
-  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.9/async-profiler-2.9-linux-x64.tar.gz" 1
-  _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.22.0/crictl-v1.22.0-linux-amd64.tar.gz" 1 0
-  _diag_download_tool jq "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
+  local arch=$(uname -m | sed -r 's/aarch64/arm64/g' |  awk '!/arm64/{$0="amd64"}1')
+  local arch_short=$(echo $arch | sed -r 's/amd64/x64/g')
+  _diag_download_tool jattach "https://github.com/jattach/jattach/releases/download/v2.2/jattach-linux-${arch_short}.tgz" 1 0
+  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.9/async-profiler-2.9-linux-${arch_short}.tar.gz" 1
+  _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.2/crictl-v1.24.2-linux-${arch}.tar.gz" 1 0
+  _diag_download_tool jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-${arch}"
 }
 
 function _diag_list_functions() {
