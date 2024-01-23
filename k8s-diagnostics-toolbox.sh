@@ -180,7 +180,11 @@ function diag_async_profiler() {
   fi
   echo 1 > /proc/sys/kernel/perf_event_paranoid
   echo 0 > /proc/sys/kernel/kptr_restrict
-  (_diag_exec_in_container $CONTAINER /tmp/async-profiler/profiler.sh "$@" && echo "Done.") || echo "Failed."
+  local ASPROF=/tmp/async-profiler/asprof
+  if [[ ! -x "$ASPROF" ]]; then
+    ASPROF=/tmp/async-profiler/profiler.sh
+  fi
+  (_diag_exec_in_container $CONTAINER $ASPROF "$@" && echo "Done.") || echo "Failed."
   echo "Rootpath $ROOT_PATH"
   if [[ "$1" != "start" ]]; then
     local argc=$#
@@ -236,7 +240,12 @@ function diag_jfr_to_flamegraph() {
   if [ -z "$FLAMEGRAPH_FILE" ]; then
     FLAMEGRAPH_FILE="${JFR_FILE%.*}.html"
   fi
-  java -cp "$(_diag_tool_cache_dir async-profiler)/build/converter.jar" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
+  local async_profiler_dir="$(_diag_tool_cache_dir async-profiler)"
+  local async_profiler_jar="$async_profiler_dir/build/converter.jar"
+  if [ ! -f "$async_profiler_jar" ]; then
+    async_profiler_jar="$async_profiler_dir/lib/converter.jar"
+  fi
+  java -cp "${async_profiler_jar}" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
   if [ $? -eq 0 ]; then
     _diag_chown_sudo_user "$FLAMEGRAPH_FILE"
     echo "Result in file://$(realpath "$FLAMEGRAPH_FILE")"
@@ -580,7 +589,7 @@ function _diag_download_tools() {
   local arch=$(uname -m | sed -r 's/aarch64/arm64/g' |  awk '!/arm64/{$0="amd64"}1')
   local arch_short=$(echo $arch | sed -r 's/amd64/x64/g')
   _diag_download_tool jattach "https://github.com/jattach/jattach/releases/download/v2.2/jattach-linux-${arch_short}.tgz" 1 0
-  _diag_download_tool async-profiler "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.9/async-profiler-2.9-linux-${arch_short}.tar.gz" 1
+  _diag_download_tool async-profiler "https://github.com/async-profiler/async-profiler/releases/download/v3.0/async-profiler-3.0-linux-${arch_short}.tar.gz" 1
   _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.2/crictl-v1.24.2-linux-${arch}.tar.gz" 1 0
   _diag_download_tool jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-${arch}"
 }
