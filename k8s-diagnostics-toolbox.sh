@@ -245,7 +245,15 @@ function diag_jfr_to_flamegraph() {
   if [ ! -f "$async_profiler_jar" ]; then
     async_profiler_jar="$async_profiler_dir/lib/converter.jar"
   fi
-  java -cp "${async_profiler_jar}" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
+  if [ -f "$async_profiler_jar" ]; then
+    java -cp "${async_profiler_jar}" jfr2flame "$JFR_FILE" "$FLAMEGRAPH_FILE"
+  elif [ -f "$async_profiler_dir/bin/jfrconv" ]; then
+    "$async_profiler_dir/bin/jfrconv" -o html "$JFR_FILE" "$FLAMEGRAPH_FILE"
+  else
+    echo "No async-profiler jar or jfrconv found"
+    return 1
+  fi
+
   if [ $? -eq 0 ]; then
     _diag_chown_sudo_user "$FLAMEGRAPH_FILE"
     echo "Result in file://$(realpath "$FLAMEGRAPH_FILE")"
