@@ -590,8 +590,8 @@ function _diag_download_tools() {
   local arch_short=$(echo $arch | sed -r 's/amd64/x64/g')
   _diag_download_tool jattach "https://github.com/jattach/jattach/releases/download/v2.2/jattach-linux-${arch_short}.tgz" 1 0
   _diag_download_tool async-profiler "https://github.com/async-profiler/async-profiler/releases/download/v4.0/async-profiler-4.0-linux-${arch_short}.tar.gz" 1
-  _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.2/crictl-v1.24.2-linux-${arch}.tar.gz" 1 0
-  _diag_download_tool jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-${arch}"
+  _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.33.0/crictl-v1.33.0-linux-${arch}.tar.gz" 1 0
+  _diag_download_tool jq "https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-${arch}"
 }
 
 function _diag_list_functions() {
