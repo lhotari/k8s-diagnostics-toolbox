@@ -180,8 +180,8 @@ function diag_async_profiler() {
   fi
   echo 1 > /proc/sys/kernel/perf_event_paranoid
   echo 0 > /proc/sys/kernel/kptr_restrict
-  local ASPROF=/tmp/async-profiler/asprof
-  if [[ ! -x "$ASPROF" ]]; then
+  local ASPROF=/tmp/async-profiler/bin/asprof
+  if [[ ! -x "$ROOT_PATH/$ASPROF" ]]; then
     ASPROF=/tmp/async-profiler/profiler.sh
   fi
   (_diag_exec_in_container $CONTAINER $ASPROF "$@" && echo "Done.") || echo "Failed."
