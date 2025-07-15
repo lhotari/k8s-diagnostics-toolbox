@@ -609,7 +609,8 @@ function _diag_list_functions() {
 }
 
 function _diag_is_k8s_node() {
-  [ -n "${CONTAINER_RUNTIME_ENDPOINT}" ] || [ -n "${KUBERNETES_SERVICE_HOST}" ] || [ -S /var/snap/microk8s/common/run/containerd.sock ] || [ -S /var/run/dockershim.sock ]
+  [ -z "${PROFILE_DOCKER_ONLY}" ] && \
+  ([ -n "${CONTAINER_RUNTIME_ENDPOINT}" ] || [ -n "${KUBERNETES_SERVICE_HOST}" ] || [ -S /var/snap/microk8s/common/run/containerd.sock ] || [ -S /var/run/dockershim.sock ])
 }
 
 function diag_collect_multiple_dumps() {
