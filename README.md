@@ -96,3 +96,13 @@ Opening the file in [JDK Mission Control](https://adoptium.net/jmc/):
 # download JMC from https://adoptium.net/jmc/
 jmc -open recording*.jfr
 ```
+
+### Using this tool to profile docker containers
+
+It's possible to use this tool to profile docker containers without k8s at all.
+
+In that case, pass `PROFILE_DOCKER_ONLY=1` to the environment of the script.
+
+```shell
+sudo PROFILE_DOCKER_ONLY=1 ./k8s-diagnostics-toolbox.sh [arguments]
+```
