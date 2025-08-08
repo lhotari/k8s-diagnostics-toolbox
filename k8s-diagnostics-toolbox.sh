@@ -284,10 +284,10 @@ function diag_async_profiler_profile() {
     # default to pid 1, but allow overriding with JAVAPID variable
     PROFILEPID="${JAVAPID:-1}"
   fi
-  ASYNC_PROFILER_OPTIONS="${ASYNC_PROFILER_OPTIONS:-"-e cpu,alloc,lock -i 1ms"}"
+  ASYNC_PROFILER_OPTIONS="${ASYNC_PROFILER_OPTIONS:-"--all -i 1ms"}"
   case "$COMMAND" in
     jfr)
-      echo "Profiling CPU, allocations and locks in JFR format with options $ASYNC_PROFILER_OPTIONS"
+      echo "Profiling all events in JFR format with options $ASYNC_PROFILER_OPTIONS"
       diag_async_profiler "$PODNAME" start $ASYNC_PROFILER_OPTIONS -o jfr -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
       _diag_wait_for_any_key "Press any key to stop profiling..."
       diag_async_profiler "$PODNAME" stop -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID" | _diag_auto_convert_jfr_file
@@ -333,11 +333,11 @@ function diag_async_profiler_profile_many() {
   local PODNAMES="$(diag_crictl pods --label "$LABEL" -o json | "$(_diag_tool_path jq)" -r '.items[] | .metadata.name')"
   echo "Matching pods are $PODNAMES"
 
-  ASYNC_PROFILER_OPTIONS="${ASYNC_PROFILER_OPTIONS:-"-e cpu,alloc,lock -i 1ms"}"
+  ASYNC_PROFILER_OPTIONS="${ASYNC_PROFILER_OPTIONS:-"--all -i 1ms"}"
 
   case "$COMMAND" in
     jfr)
-      echo "Profiling CPU, allocations and locks in JFR format with options $ASYNC_PROFILER_OPTIONS"
+      echo "Profiling all events in JFR format with options $ASYNC_PROFILER_OPTIONS"
       for PODNAME in $PODNAMES; do
         diag_async_profiler "$PODNAME" start $ASYNC_PROFILER_OPTIONS -o jfr -f "/tmp/${PODNAME}_async_profiler.jfr" "$PROFILEPID"
       done
@@ -597,7 +597,7 @@ function _diag_download_tools() {
   local arch=$(uname -m | sed -r 's/aarch64/arm64/g' |  awk '!/arm64/{$0="amd64"}1')
   local arch_short=$(echo $arch | sed -r 's/amd64/x64/g')
   _diag_download_tool jattach "https://github.com/jattach/jattach/releases/download/v2.2/jattach-linux-${arch_short}.tgz" 1 0
-  _diag_download_tool async-profiler "https://github.com/async-profiler/async-profiler/releases/download/v4.0/async-profiler-4.0-linux-${arch_short}.tar.gz" 1
+  _diag_download_tool async-profiler "https://github.com/async-profiler/async-profiler/releases/download/v4.1/async-profiler-4.1-linux-${arch_short}.tar.gz" 1
   _diag_download_tool crictl "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.33.0/crictl-v1.33.0-linux-${arch}.tar.gz" 1 0
   _diag_download_tool jq "https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-${arch}"
 }
